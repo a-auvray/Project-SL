@@ -1,35 +1,50 @@
-# 1. On définit la fonction (la boite à calcul) et on renvoie M à l'extérieur 
-def calculer_1RM(C, R, E, P) :
-
-    if 6 > E > 10 :
-        print("Le RPE doit etre compris en 6 et 10 ")
+def calculer_1RM(C, R, E, P):
+    # Sécurité RPE
+    if not (6 <= E <= 10):
+        print("Le RPE doit être compris entre 6 et 10.")
         return 0.0
 
-    else :
-        M = (C + P) * (1 + (R + (10 - E)) / 32.5) - P
+    # 1. Calcul du poids total du système (Lest + Poids de corps)
+    poids_total_deplace = C + P
 
-        M = M.__round__(3)
+    # 2. Répétitions "virtuelles" (Reps réalisées + RIR restant)
+    reps_virtuelles = R + (10 - E)
 
-        M = int(M / 0.25) * 0.25
+    # 3. Formule d'Epley appliquée au système global
+    systeme_1RM = poids_total_deplace * (1 + (reps_virtuelles / 30))
 
-    return M 
+    # 4. On extrait le lest pur en retirant le poids de corps
+    lest_max_estime = systeme_1RM - P
 
-#2. On demande à l'uilisateur de rentrer ses données 
-C = float(input("Entrer la charge de travail : "))
+    # Sécurité si le résultat calculé est négatif (ex: travail léger au PDC)
+    if lest_max_estime < 0:
+        lest_max_estime = 0.0
 
-R = int(input("Entrer le nombre de répétitions effecutées : "))
-
-while True :
-    E = float(input("Entrer le RPE : "))
-    if 6 <= E <= 10 : 
-        break
-    else :
-        print("Erreur ! Veuillez entrer un RPE compris entre 6 et 10 ")
+    # Arrondi au 0.25 kg près
+    return round(lest_max_estime * 4) / 4 
 
 
-P = float(input("Entrer votre poids de corps actuel : "))
+def entrer_donnees():
+    print("=== CALCULATEUR DE 1RM EN STREET LIFTING ===")
+    
+    # Sécurisation des inputs contre les erreurs de frappe (lettres au lieu de chiffres)
+    try:
+        C = float(input("Entrer la charge de travail (lest en kg) : ").strip() or 0.0)
+        R = int(input("Entrer le nombre de répétitions effectuées : ").strip() or 0)
+        
+        while True:
+            E = float(input("Entrer le RPE (6 à 10) : ").strip())
+            if 6 <= E <= 10: 
+                break
+            print("❌ Erreur ! Veuillez entrer un RPE compris entre 6 et 10.")
 
-#3. On utilise la fonction, on arrondit la valeur et on affiche le résulat
-M = calculer_1RM(C, R, E, P)
+        P = float(input("Entrer votre poids de corps actuel (en kg) : ").strip())
 
-print(f"Votre 1RM estimée est {M}")
+        # Calcul et affichage
+        M = calculer_1RM(C, R, E, P)
+        print(f"\n🔥 Votre lest max estimé (1RM) est de : {M} kg")
+        return M
+
+    except ValueError:
+        print("❌ Saisie invalide ! Veuillez n'entrer que des chiffres.")
+        return 0.0
